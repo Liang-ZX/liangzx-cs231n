@@ -168,7 +168,7 @@ class FullyConnectedNet(object):
           this datatype. float32 is faster but less accurate, so you should use
           float64 for numeric gradient checking.
         - seed: If not None, then pass this random seed to the dropout layers. This
-          will make the dropout layers deteriminstic so we can gradient check the
+          will make the dropout layers deterministic so we can gradient check the
           model.
         """
         self.normalization = normalization
@@ -193,6 +193,13 @@ class FullyConnectedNet(object):
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
         pass
+        self.params['W1'] = np.random.randn(input_dim, hidden_dims[0]) * weight_scale
+        self.params['b1'] = np.zeros(hidden_dims[0])
+        for i in range(self.num_layers - 2):
+            self.params['W'+str(i+2)] = np.random.randn(hidden_dims[i], hidden_dims[i+1]) * weight_scale
+            self.params['b'+str(i+2)] = np.zeros(hidden_dims[i+1])
+        self.params['W' + str(self.num_layers)] = np.random.randn(hidden_dims[-1], num_classes)
+        self.params['b' + str(self.num_layers)] = np.random.randn(num_classes)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -256,6 +263,16 @@ class FullyConnectedNet(object):
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
         pass
+        caches = list(range(self.num_layers))
+        hidden_layers = list(range(self.num_layers + 1))
+        hidden_layers[0] = X
+        for i in range(self.num_layers):
+            W, b = self.params['W' + str(i+1)], self.params['b' + str(i+1)]
+            if i == self.num_layers - 1:
+                hidden_layers[i+1], caches[i] = affine_forward(hidden_layers[i], W, b)
+            else:
+                hidden_layers[i+1], caches[i] = affine_relu_forward(hidden_layers[i], W, b)
+        scores = hidden_layers[self.num_layers]
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -283,7 +300,19 @@ class FullyConnectedNet(object):
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
         pass
-
+        loss, dscores = softmax_loss(scores, y)
+        dhidden = list(range(self.num_layers + 1))
+        dhidden[self.num_layers] = dscores
+        for i in range(self.num_layers, 0, -1):
+            if i == self.num_layers:
+                dhidden[i-1], grads['W' + str(i)], grads['b' + str(i)] = affine_backward(dhidden[i], caches[i-1])
+            else:
+                dhidden[i-1], grads['W' + str(i)], grads['b' + str(i)] = affine_relu_backward(dhidden[i], caches[i-1])
+            grads['W' + str(i)] += self.reg * self.params['W' + str(i)]
+            W = self.params['W' + str(i)]
+            loss += 0.5 * self.reg * np.sum(W * W)
+            
+        
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
