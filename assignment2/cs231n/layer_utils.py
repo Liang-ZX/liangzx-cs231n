@@ -29,6 +29,49 @@ def affine_relu_backward(dout, cache):
     dx, dw, db = affine_backward(da, fc_cache)
     return dx, dw, db
 
+def affine_bn_relu_forward(x, w, b, gamma, beta, bn_param):
+    """
+    customized API
+    affine - batch - relu
+    """
+    a, fc_cache = affine_forward(x, w, b)
+    aa, bn_cache = batchnorm_forward(a, gamma, beta, bn_param)
+    out, relu_cache = relu_forward(aa)
+    cache = (fc_cache, bn_cache, relu_cache)
+    return out, cache
+
+def affine_bn_relu_backward(dout, cache):
+    """
+    customized API
+    affine - batch - relu
+    """
+    fc_cache, bn_cache, relu_cache = cache
+    da = relu_backward(dout, relu_cache)
+    daa, dgamma, dbeta = batchnorm_backward_alt(da, bn_cache)
+    dx, dw, db = affine_backward(daa, fc_cache)
+    return dx, dw, db, dgamma, dbeta
+
+def affine_ln_relu_forward(x, w, b, gamma, beta, bn_param):
+    """
+    customized API
+    affine - layer norm - relu
+    """
+    a, fc_cache = affine_forward(x, w, b)
+    aa, bn_cache = layernorm_forward(a, gamma, beta, bn_param)
+    out, relu_cache = relu_forward(aa)
+    cache = (fc_cache, bn_cache, relu_cache)
+    return out, cache
+
+def affine_ln_relu_backward(dout, cache):
+    """
+    customized API
+    affine - layer norm - relu
+    """
+    fc_cache, bn_cache, relu_cache = cache
+    da = relu_backward(dout, relu_cache)
+    daa, dgamma, dbeta = layernorm_backward(da, bn_cache)
+    dx, dw, db = affine_backward(daa, fc_cache)
+    return dx, dw, db, dgamma, dbeta
 
 def conv_relu_forward(x, w, b, conv_param):
     """

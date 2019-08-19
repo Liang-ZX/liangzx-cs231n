@@ -203,6 +203,13 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
         pass
+        sample_mean = np.mean(x, axis = 0)
+        sample_var = np.var(x , axis = 0)
+        x_normal = (x - sample_mean) / (np.sqrt(sample_var  + eps))
+        out = gamma * x_normal + beta
+        cache = (gamma, beta, x, sample_mean, sample_var, eps, x_normal)
+        running_mean = momentum * running_mean + (1 - momentum) * sample_mean
+        running_var = momentum * running_var + (1 - momentum) * sample_var
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         #######################################################################
@@ -218,6 +225,8 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
         pass
+        x_normal = (x - running_mean) / np.sqrt(running_var + eps)
+        out = gamma * x_normal + beta
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         #######################################################################
@@ -260,7 +269,25 @@ def batchnorm_backward(dout, cache):
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
     pass
-
+    gamma, beta, x, sample_mean, sample_var, eps, x_normal = cache
+    dbeta = np.sum(dout, axis = 0)
+    dgamma = np.sum(dout*x_normal, axis = 0) 
+    dx_normal = dout * gamma
+    
+    N = dout.shape[0]
+    dx_1 = dx_normal
+    dx_2_b = np.sum((x - sample_mean) * dx_1, axis=0)
+    dx_2_a = ((sample_var+ eps) ** -0.5) * dx_1
+    dx_3_b = (-0.5) * ((sample_var + eps) ** -1.5) * dx_2_b
+    dx_4_b = dx_3_b * 1
+    dx_5_b = np.ones_like(x) / N * dx_4_b
+    dx_6_b = 2 * (x - sample_mean) * dx_5_b
+    dx_7_a = dx_6_b * 1 + dx_2_a * 1
+    dx_7_b = dx_6_b * 1 + dx_2_a * 1
+    dx_8_b = -1 * np.sum(dx_7_b, axis=0)
+    dx_9_b = np.ones_like(x) / N * dx_8_b
+    dx = dx_9_b + dx_7_a
+    
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -295,7 +322,15 @@ def batchnorm_backward_alt(dout, cache):
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
     pass
-
+    gamma, beta, x, sample_mean, sample_var, eps, x_normal = cache
+    dbeta = np.sum(dout, axis = 0)
+    dgamma = np.sum(dout*x_normal, axis = 0) 
+    dx_normal = dout * gamma
+    N = dout.shape[0]
+    dvar = np.sum(dx_normal * (x - sample_mean) * (-0.5) * np.power(sample_var+eps, -1.5), axis = 0)
+    dmean = np.sum(-dx_normal / np.sqrt(sample_var + eps), axis = 0) + dvar / N * np.sum(-2*(x - sample_mean), axis = 0)
+    dx = dx_normal / np.sqrt(sample_var + eps) + dvar * 2 * (x - sample_mean) / N + dmean / N
+    
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -341,6 +376,13 @@ def layernorm_forward(x, gamma, beta, ln_param):
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
     pass
+    x = x.T
+    sample_mean = np.mean(x, axis = 0)
+    sample_var = np.var(x , axis = 0)
+    x_normal = (x - sample_mean) / (np.sqrt(sample_var  + eps))
+    x_normal = x_normal.T
+    out = gamma * x_normal + beta
+    cache = (gamma, beta, x, sample_mean, sample_var, eps, x_normal)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -376,7 +418,17 @@ def layernorm_backward(dout, cache):
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
     pass
-
+    gamma, beta, x, sample_mean, sample_var, eps, x_normal = cache
+    dbeta = np.sum(dout, axis = 0)
+    dgamma = np.sum(dout*x_normal, axis = 0) 
+    dx_normal = dout * gamma
+    N = x.shape[0]
+    dx_normal = dx_normal.T
+    dvar = np.sum(dx_normal * (x - sample_mean) * (-0.5) * np.power(sample_var+eps, -1.5), axis = 0)
+    dmean = np.sum(-dx_normal / np.sqrt(sample_var + eps), axis = 0) + dvar / N * np.sum(-2*(x - sample_mean), axis = 0)
+    dx = dx_normal / np.sqrt(sample_var + eps) + dvar * 2 * (x - sample_mean) / N + dmean / N
+    dx = dx.T
+    
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -783,7 +835,6 @@ def svm_loss(x, y):
     dx[np.arange(N), y] -= num_pos
     dx /= N
     return loss, dx
-
 
 def softmax_loss(x, y):
     """
