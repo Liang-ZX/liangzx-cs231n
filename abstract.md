@@ -57,21 +57,26 @@ $$L = \frac{1}{N}\sum_i(-f_{y_i}+log\sum_je^{f_j})+\lambda\sum_k\sum_lW_{k,l}^2$
 
 ## Class 5 Training neural-networks
 ### Commonly used activation functions 
-**non-linearity**
-- *sigmoid function* $\sigma(x)=1/(1+e^{-x})$
+- *sigmoid function*: $\sigma(x)=1/(1+e^{-x})$
 	drawbacks: 
-	- Sigmoids saturate and kill gradients.
+	- Sigmoids saturate(饱和) and kill gradients.
 	+ Sigmoid outputs are not zero-centered.
-+ *Tanh(双曲正切)* $tanh(x)=2\sigma(2x)-1$ 
-- *ReLU(Rectified Linear Unit)(整流线性单元)* $f(x)=max(0,x)$
++ *Tanh(双曲正切)*: $tanh(x)=2\sigma(2x)-1$ 
+- *ReLU(Rectified Linear Unit)(整流线性单元)*: $f(x)=max(0,x)$
+	strengths:
+	- 提高收敛速度(e.g. a factor of 6 in [Krizhevsky et al.](http://www.cs.toronto.edu/~fritz/absps/imagenet.pdf))
+
 	drawbacks:
 	- ReLU units can be fragile during training and can "die" but with a proper setting of **the learning rate** this is less frequently an issue.
-+ *Leaky ReLU* $f(x)=1(x<0)(\alpha x)+1(x>=0)(x)$ where $\alpha$ is a small constant
-- *Maxout* $max(\omega_1^Tx+b_1, \omega_2^Tx+b_2)$ it generalizes the ReLU and its leaky version
-**Last comment: very rare to mix and match different types of neurons in the same network**
-*"What neuron type should I use?"* Use the ReLU non-linearity, be careful with your learning rates and possibly monitor the fraction of "dead" units in a network.
++ *Leaky ReLU*: $f(x)=1(x<0)(\alpha x)+1(x>=0)(x)$ where $\alpha$ is a small constant
+- *Maxout*: $max(\omega_1^Tx+b_1, \omega_2^Tx+b_2)$ it generalizes the ReLU and its leaky version
+
++ **Last comment**: very rare to mix and match different types of neurons in the same network 
+
+	*"What neuron type should I use?"* Use the **ReLU non-linearity**, be careful with your learning rates and possibly monitor the fraction of "dead" units in a network. If this concerns you, give *Leaky ReLU* or *Maxout* a try.
 
 ### Fully-Connected layers
++ 神经网络可以近似任何连续函数。([Approximation by Superpositions of Sigmoidal Function](http://www.dartmouth.edu/~gvc/Cybenko_MCSS.pdf))虽然在理论上深层网络（使用了多个隐层）和单层网络的表达能力是一样的，但是就实践经验而言，深度网络效果比单层网络好。
 - A fully-connected neural network with an arbitrary number of hidden layers, ReLU nonlinearities, and a *softmax* loss function. This will also implement *dropout and batch/layer normalization* as options. For a network with $L$ layers, the architecture will be
 
 		{affine - [batch/layer norm] - relu - [dropout]} x (L - 1) - affine - softmax
@@ -84,8 +89,9 @@ $$L = \frac{1}{N}\sum_i(-f_{y_i}+log\sum_je^{f_j})+\lambda\sum_k\sum_lW_{k,l}^2$
 		由 $Var(X) = E(X^2)-E^2(X)$ 得
 		$$E(\lambda\sum_k\sum_lW_{k,l}^2)=\lambda\sum_k\sum_lE(W_{k,l}^2)=\lambda\sum_k\sum_l(Var(W_{k,l})+E^2(W_{k,l}))$$又$W_{k,l}$服从于$N(0, weight\_scale^2)$，所以
 		$$E(\lambda\sum_k\sum_lW_{k,l}^2)=\lambda weight\_scale^2*W元素个数$$
-	- SVM: loss $= C-1+ E(\lambda\sum_k\sum_lW_{k,l}^2)$
-	+ softmax: loss $= logC + E(\lambda\sum_k\sum_lW_{k,l}^2)$
+	- $SVM: loss = C-1+ E(\lambda\sum_k\sum_lW_{k,l}^2)$
+	&nbsp;
+	+ $softmax: loss = logC + E(\lambda\sum_k\sum_lW_{k,l}^2)$
 
 ### Setting number of layers and their sizes
 *use as **big** of a neural network as your computational budget allows, and use other **regularization** techniques to control overfitting*
@@ -125,7 +131,7 @@ $$L = \frac{1}{N}\sum_i(-f_{y_i}+log\sum_je^{f_j})+\lambda\sum_k\sum_lW_{k,l}^2$
 
 ### Weight Initialization
 - Small random numbers
-+ calibrating the variances with 1/sqrt(n)
++ calibrating the variances with `1/sqrt(n)`
 - In practice the current recommendation is to use ReLU units and use the ```w = np.random.randn(n) * sqrt(2.0/n)``` [Reference Article](https://arxiv-web3.library.cornell.edu/abs/1502.01852/)
 + [*Batch Normalization*](https://arxiv.org/abs/1502.03167/): During training the sample mean and (uncorrected) sample variance are computed from **minibatch statistics** and used to normalize the incoming data.
 	```python
@@ -185,7 +191,7 @@ $$L = \frac{1}{N}\sum_i(-f_{y_i}+log\sum_je^{f_j})+\lambda\sum_k\sum_lW_{k,l}^2$
 
 	Here we see an introduction of a v variable that is initialized at zero, and an **additional hyperparameter (mu)**.
 
-	This parameter is usually set to values such as [0.5, 0.9, 0.95, 0.99]. A typical setting is to start with momentum of about 0.5 and anneal it to 0.99 or so over multiple epochs. 
+	This parameter is usually set to values such as `[0.5, 0.9, 0.95, 0.99]`. A typical setting is to start with momentum of about `0.5` and anneal it to `0.99` or so over multiple epochs. 
 	
 	*With Momentum update, the parameter vector will build up velocity in any direction that has consistent gradient.*
 + Nesterov Momentum
@@ -229,3 +235,36 @@ $$L = \frac{1}{N}\sum_i(-f_{y_i}+log\sum_je^{f_j})+\lambda\sum_k\sum_lW_{k,l}^2$
 	论文中推荐的参数值`eps=1e-8, beta1=0.9, beta2=0.999`。
 #### Parameter Updating Summary
 In practice *Adam* is currently recommended as the default algorithm to use, and often works slightly better than RMSProp. However, it is often also worth trying *SGD+Nesterov* Momentum as an alternative.
+
+### Learning and Evaluating
+#### Gradient Checks
+- Use the centered formula (second order approximation)
+	$$\frac{df(x)}{dx} = \frac{f(x+h)-f(x-h)}{2h}$$
++ Use relative error for the comparison
+	$$\frac{|f_a^{'} - f_n^{'}|}{max(|f_a^{'}|,|f_n^{'}|)}$$
+#### Babysitting the learning process
+- Loss Function
+	过低的学习率导致算法的改善是线性的。高一些的学习率会看起来呈几何指数下降，更高的学习率会让损失值很快下降，但是接着就停在一个不好的损失值上。
+
+	损失值的噪音很大(波动明显)说明批数据的数量可能太小。
++ Train/Val accuracy
+	在训练集准确率和验证集准确率中间的空隙指明了模型过拟合的程度。就应该增大正则化强度（更强的L2权重惩罚，更多的随机失活等）或收集更多的数据。
+	
+	另一种可能是验证集曲线和训练集曲线几乎重合，这种情况说明模型容量还不够大，应该通过增加**参数数量**让模型容量更大些。
+- **Ratio of weights:updates**
+	Note: *updates*, not the raw gradients (e.g. in vanilla sgd this would be the gradient multiplied by the learning rate). You might want to evaluate and track this ratio for every set of parameters independently. 
+	
+	A rough heuristic is that this ratio should be somewhere around `1e-3`. If it is lower than this then the learning rate might be too low. If it is higher then the learning rate is likely too high. 
+
+	```python
+	# assume parameter vector W and its gradient vector dW
+	param_scale = np.linalg.norm(W.ravel())
+	update = -learning_rate*dW # simple SGD update
+	update_scale = np.linalg.norm(update.ravel())
+	W += update # the actual update
+	print update_scale / param_scale # want ~1e-3
+	```
++ First-layer Visualizations
+	充满了噪音的图像，暗示了网络可能出现了问题：网络没有收敛，学习率设置不恰当，正则化惩罚的权重过低。
+	
+	训练过程良好的图: nice, smooth, clean and diverse features
