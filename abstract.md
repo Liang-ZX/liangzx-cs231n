@@ -268,3 +268,10 @@ In practice *Adam* is currently recommended as the default algorithm to use, and
 	充满了噪音的图像，暗示了网络可能出现了问题：网络没有收敛，学习率设置不恰当，正则化惩罚的权重过低。
 	
 	训练过程良好的图: nice, smooth, clean and diverse features
+
+## Class 6  Typical Neural Network
+### RNN递归神经网络
+- BPTT(backpropogation through time)
++ TBPTT(truncated BPTT)
+	用于解决BPTT数据量过大的问题
+- 梯度爆炸与梯度消失
