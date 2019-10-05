@@ -1,3 +1,9 @@
 #large file
 *.tar.gz
 cifar-10-batches-py
+cifar-10-python.tar.gz
+coco_captioning
+*.zip
+*.npz
+squeezenet.*
+*/.ipynb_checkpoints/*

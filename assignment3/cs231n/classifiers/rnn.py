@@ -143,6 +143,18 @@ class CaptioningRNN(object):
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
         pass
+        h0, feature_cache = affine_forward(features, W_proj, b_proj)
+        x, embed_cache = word_embedding_forward(captions_in, W_embed)
+        if self.cell_type == 'rnn':
+            h, rnn_cache = rnn_forward(x, h0, Wx, Wh, b)
+        vocab_score, vocab_cache = temporal_affine_forward(h, W_vocab, b_vocab)
+        loss, dvocab_score = temporal_softmax_loss(vocab_score, captions_out, mask, verbose=False)
+        
+        dh, grads['W_vocab'], grads['b_vocab'] = temporal_affine_backward(dvocab_score, vocab_cache)
+        if self.cell_type == 'rnn':
+            dx, dh0, grads['Wx'], grads['Wh'], grads['b'] = rnn_backward(dh, rnn_cache)
+        grads['W_embed'] = word_embedding_backward(dx, embed_cache)
+        dfeatures, grads['W_proj'], grads['b_proj'] = affine_backward(dh0, feature_cache)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -212,7 +224,18 @@ class CaptioningRNN(object):
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
         pass
-
+        prev_h, _ = affine_forward(features, W_proj, b_proj)
+        captions[:, 0] = self._start
+        x = np.array([self._start for i in range(N)])
+        for t in range(1, max_length):
+            x_emb, _ = word_embedding_forward(x, W_embed)
+            if self.cell_type == 'rnn':
+                next_h, _ = rnn_step_forward(x_emb, prev_h, Wx, Wh, b)
+                prev_h = next_h
+            scores, _ = affine_forward(next_h, W_vocab, b_vocab)
+            x = scores.argmax(1)
+            captions[:, t] = x
+        
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
