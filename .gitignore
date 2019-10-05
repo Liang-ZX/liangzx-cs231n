@@ -7,3 +7,4 @@ coco_captioning
 *.npz
 squeezenet.*
 */.ipynb_checkpoints/*
+MNIST_data
